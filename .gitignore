@@ -1,0 +1,21 @@
+# Python virtual environment
+.venv
+venv/
+*.venv
+
+# Python cache files
+__pycache__/
+*.pyc
+
+# Environment variables
+.env
+
+# Google Cloud Credentials
+credentials.json
+
+# Generated reports
+reports/
+
+# IDE files
+.vscode/
+.idea/

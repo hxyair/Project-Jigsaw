@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Project Jigsaw: When Multi-Agents and LLMs Collaborate to Write Project Proposals</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Orbitron:wght@700;900&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet"
+    />
+
+    <style>
+        :root {
+            --bg-dark: #0a0b0f;
+            --bg-medium: #1e293b;
+            --border-color: #334155;
+            --text-light: #e2e8f0;
+            --text-medium: #94a3b8;
+            --text-dark: #64748b;
+            --accent-blue: #0ea5e9;
+        }
+
+        /* === Core layout styles === */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, var(--bg-dark) 0%, var(--bg-medium) 100%);
+            color: var(--text-light);
+            height: 100vh;
+            overflow: hidden;
+        }
+        .dashboard { display: grid; grid-template-columns: 2.5fr 1fr; height: 100vh; }
+
+        /* === Main Workspace (Central Layout) === */
+        .main-workspace {
+            display: flex; flex-direction: column;
+            padding: 20px; overflow: hidden;
+        }
+        .system-title {
+            font-family: 'Orbitron', sans-serif; font-size: 20px; font-weight: 900;
+            color: var(--accent-blue); text-align: center; margin-bottom: 15px;
+            text-shadow: 0 0 15px rgba(14, 165, 233, 0.5); animation: pulse 3s infinite;
+        }
+        @keyframes pulse { 0%,100% {opacity:1;} 50% {opacity:0.8;} }
+
+        .command-center { text-align: center; margin-bottom: 20px; }
+        #project-input {
+            width: 80%; background: rgba(10, 11, 15, 0.8); border: 2px solid var(--border-color);
+            border-radius: 12px; padding: 16px; color: #06b6d4;
+            font-family: 'JetBrains Mono', monospace; font-size: 14px;
+            resize: none; min-height: 60px; transition: all 0.3s ease;
+        }
+        #project-input:focus { outline: none; border-color: var(--accent-blue); box-shadow: 0 0 20px rgba(14, 165, 233, 0.3); }
+        #generate-btn {
+            background: linear-gradient(90deg, #0ea5e9, #06b6d4); border: none;
+            padding: 14px 28px; border-radius: 12px; color: white;
+            font-weight: 600; font-size: 16px; cursor: pointer; margin-top: 16px;
+            transition: all 0.3s ease;
+        }
+        #generate-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(14, 165, 233, 0.4); }
+        #generate-btn:disabled { background: #334155; cursor: not-allowed; opacity: 0.6; }
+
+        /* === Collaboration Canvas (Flowchart Layout) === */
+        .collaboration-canvas {
+            position: relative;
+            flex-grow: 1;
+            min-height: 450px;
+        }
+        .agent-node {
+            position: absolute;
+            width: 180px; height: 75px;
+            background: rgba(30, 41, 59, 0.6);
+            border: 2px solid #475569;
+            border-radius: 12px;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            font-size: 13px; color: var(--text-medium);
+            text-align: center; transition: all 0.4s ease;
+            padding: 5px;
+        }
+        .agent-node strong { display: block; font-size: 14px; color: var(--text-light); }
+        .agent-node.active {
+            border-color: var(--agent-color); color: var(--agent-color);
+            box-shadow: 0 0 25px rgba(var(--agent-rgb), 0.5); transform: scale(1.05);
+        }
+        .agent-node.completed {
+            border-color: var(--agent-color); background: rgba(var(--agent-rgb), 0.15);
+        }
+        .agent-node.active::after {
+            content: 'PROCESSING...';
+            position: absolute; bottom: -20px; font-size: 10px;
+            font-family: 'JetBrains Mono'; animation: blink 1.5s infinite;
+            color: var(--agent-color);
+        }
+        @keyframes blink { 0%,100% {opacity:1;} 50% {opacity:0.5;} }
+        
+        /* Node Positioning */
+        #agent-pi-start { top: 0; left: 50%; transform: translateX(-50%); }
+        /* Phase 1 */
+        #agent-background { top: 120px; left: 10%; }
+        #agent-market { top: 120px; left: 50%; transform: translateX(-50%); }
+        #agent-impact { top: 120px; right: 10%; }
+        /* Phase 2 */
+        #agent-technical { top: 240px; left: 20%; }
+        #agent-planner { top: 240px; left: 50%; transform: translateX(-50%); }
+        #agent-budget { top: 240px; right: 20%; }
+        /* Phase 3 */
+        #agent-pi-end { top: 360px; left: 50%; transform: translateX(-50%); }
+
+        /* Connectors */
+        .connector {
+            position: absolute;
+            background-color: var(--text-dark);
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        .connector.visible { opacity: 0.6; }
+        /* Vertical Connectors */
+        #conn-v1 { top: 75px; left: 50%; width: 2px; height: 45px; }
+        #conn-v2 { top: 195px; left: 50%; width: 2px; height: 45px; }
+        #conn-v3 { top: 315px; left: 50%; width: 2px; height: 45px; }
+        /* Horizontal Connectors */
+        #conn-h1 { top: 156px; left: 29%; width: 42%; height: 2px; transform-origin: center; } /* Adjusted left/width */
+        #conn-h2 { top: 276px; left: 35%; width: 30%; height: 2px; transform-origin: center; }
+
+        /* Log Stream & Report Viewer */
+        .log-and-reports-container { display: flex; flex-grow: 1; overflow: hidden; }
+        .output-stream { background: rgba(10, 11, 15, 0.8); border-radius: 12px; border-top: 2px solid var(--border-color); margin-top: 20px; padding: 15px; font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.6; flex-grow: 1; overflow-y: auto; }
+        .stream-header { color: var(--text-dark); margin-bottom: 10px; }
+        .report-viewer { background: rgba(30, 41, 59, 0.6); border-left: 1px solid var(--border-color); padding: 20px; overflow-y: auto; }
+        .viewer-header { font-size: 16px; font-weight: 600; color: var(--accent-blue); margin-bottom: 20px; }
+        .report-list-container { background: rgba(10, 11, 15, 0.8); border: 1px solid var(--border-color); border-radius: 12px; height: calc(100vh - 80px); overflow-y: auto; padding: 10px; }
+        #reportList { list-style: none; }
+        #reportList li a { display: block; padding: 12px 16px; background: rgba(30, 41, 59, 0.5); border-radius: 8px; margin-bottom: 8px; color: var(--text-medium); text-decoration: none; font-family: 'JetBrains Mono', monospace; font-size: 13px; border-left: 3px solid transparent; transition: all 0.3s ease; word-break: break-all; }
+        #reportList li a:hover { background: rgba(14, 165, 233, 0.2); color: var(--text-light); border-left-color: var(--accent-blue); }
+
+        /* Agent Color Themes */
+        .agent-pi, .agent-pi-start, .agent-pi-end { --agent-color: #0ea5e9; --agent-rgb: 14,165,233; }
+        .agent-background { --agent-color: #10b981; --agent-rgb: 16,185,129; }
+        .agent-market { --agent-color: #ef4444; --agent-rgb: 239,68,68; }
+        .agent-impact { --agent-color: #f97316; --agent-rgb: 249,115,22; }
+        .agent-technical { --agent-color: #f59e0b; --agent-rgb: 245,158,11; }
+        .agent-planner { --agent-color: #06b6d4; --agent-rgb: 6,182,212; }
+        .agent-budget { --agent-color: #8b5cf6; --agent-rgb: 139,92,246; }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <div class="main-workspace">
+            <div class="system-title">🚀 Project Jigsaw: <br>When Multi-Agents and LLMs Collaborate to Write Project Proposals</div>
+            <div class="command-center">
+                <textarea id="project-input" placeholder="Enter your R&D project idea..."></textarea>
+                <button id="generate-btn" onclick="generateReport()">🚀 Initiate Project Lifecycle</button>
+            </div>
+
+            <div class="collaboration-canvas">
+                <div class="agent-node agent-pi-start" id="agent-pi-start"><strong>PI Agent</strong><span>(Initiator)</span></div>
+                
+                <div class="connector" id="conn-v1"></div>
+                <div class="connector" id="conn-h1"></div>
+                <div class="connector" id="conn-v2"></div>
+                <div class="connector" id="conn-h2"></div>
+                <div class="connector" id="conn-v3"></div>
+
+                <div class="agent-node agent-background" id="agent-background"><strong>Background</strong><span>Specialist</span></div>
+                <div class="agent-node agent-market" id="agent-market"><strong>Market</strong><span>Analyst</span></div>
+                <div class="agent-node agent-impact" id="agent-impact"><strong>Impact</strong><span>Assessor</span></div>
+
+                <div class="agent-node agent-technical" id="agent-technical"><strong>Technical</strong><span>Architect</span></div>
+                <div class="agent-node agent-planner" id="agent-planner"><strong>Project</strong><span>Planner</span></div>
+                <div class="agent-node agent-budget" id="agent-budget"><strong>Budget</strong><span>Controller</span></div>
+
+                <div class="agent-node agent-pi-end" id="agent-pi-end"><strong>PI Agent</strong><span>(Synthesizer)</span></div>
+            </div>
+            
+            <div class="output-stream" id="outputStream">
+                <div class="stream-header">Live Project Log</div>
+            </div>
+        </div>
+
+        <div class="report-viewer">
+            <div class="viewer-header">📚 Report Library</div>
+            <div class="report-list-container">
+                <ul id="reportList"></ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const PHASES = [
+            { 
+                name: "Phase 1: Feasibility Study",
+                agents: ["background", "market", "impact"],
+                connectors: ["conn-v1", "conn-h1"]
+            },
+            {
+                name: "Phase 2: Planning & Resourcing",
+                agents: ["technical", "planner", "budget"],
+                connectors: ["conn-v2", "conn-h2"]
+            },
+            {
+                name: "Phase 3: Final Synthesis",
+                agents: ["pi-end"],
+                connectors: ["conn-v3"]
+            }
+        ];
+        const ALL_AGENTS = ["pi-start", "background", "market", "impact", "technical", "planner", "budget", "pi-end"];
+        const ALL_CONNECTORS = ["conn-v1", "conn-h1", "conn-v2", "conn-h2", "conn-v3"];
+        const STEP_DELAY = 4000; // 4 seconds per phase
+        let isGenerating = false;
+
+        function addToStream(msg, type = "info") { /* ... (no changes) ... */ }
+        function animateAgent(agentId, state) { /* ... (no changes) ... */ }
+
+        function animateConnector(connectorId, show) {
+            const conn = document.getElementById(connectorId);
+            if(conn) show ? conn.classList.add('visible') : conn.classList.remove('visible');
+        }
+
+        function resetCollaborationUI() {
+            ALL_AGENTS.forEach(id => animateAgent(id, 'idle'));
+            ALL_CONNECTORS.forEach(id => animateConnector(id, false));
+            const generateBtn = document.getElementById('generate-btn');
+            generateBtn.disabled = false;
+            generateBtn.innerText = '🚀 Initiate Project Lifecycle';
+        }
+
+        async function runUiAnimation() {
+            animateAgent('pi-start', 'completed');
+
+            for (const phase of PHASES) {
+                addToStream(`<strong>${phase.name}</strong> initiated...`, "system");
+                phase.connectors.forEach(id => animateConnector(id, true));
+                
+                // Animate all agents in the current phase in parallel
+                const agentPromises = phase.agents.map(agentId => 
+                    new Promise(async (resolve) => {
+                        animateAgent(agentId, 'active');
+                        await new Promise(r => setTimeout(r, STEP_DELAY / 2));
+                        resolve();
+                    })
+                );
+                await Promise.all(agentPromises);
+                
+                addToStream(`${phase.name} processing...`, "processing");
+                await new Promise(r => setTimeout(r, STEP_DELAY));
+
+                phase.agents.forEach(agentId => animateAgent(agentId, 'completed'));
+                addToStream(`<strong>${phase.name}</strong> completed. Findings submitted.`, "info");
+            }
+        }
+        
+        async function callBackendApi(idea) {
+            addToStream("All specialist analyses complete. Calling backend to generate final report...", "system");
+            return fetch("http://localhost:5000/generate", {
+                method: "POST", headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({idea: idea})
+            });
+        }
+
+        async function generateReport() {
+            if (isGenerating) return;
+            const input = document.getElementById("project-input").value.trim();
+            if (!input) { addToStream("⚠️ Please enter a project idea.", "error"); return; }
+
+            isGenerating = true;
+            resetCollaborationUI();
+            const generateBtn = document.getElementById('generate-btn');
+            generateBtn.disabled = true;
+            generateBtn.innerText = 'Project Lifecycle in Progress...';
+            addToStream(`🚀 Project Lifecycle initiated for idea: "${input}"`, "system");
+            
+            try {
+                // The entire UI animation runs first, simulating the full process
+                await runUiAnimation();
+
+                // Then, the backend is called to do the actual work
+                const apiResponse = await callBackendApi(input);
+
+                if (!apiResponse.ok) {
+                    const errorData = await apiResponse.json();
+                    throw new Error(errorData.message || "Server returned an error status.");
+                }
+                
+                const data = await apiResponse.json();
+
+                if (data.status === "success") {
+                    addToStream(`✅ Final Report Generated! Path: ${data.file_path}`, "success");
+                    loadReports();
+                } else {
+                    throw new Error(data.message);
+                }
+
+            } catch (err) {
+                console.error("Collaboration Error:", err);
+                addToStream(`❌ An error occurred: ${err.message}`, "error");
+                resetCollaborationUI(); // Reset on failure
+            } finally {
+                isGenerating = false;
+                generateBtn.disabled = false;
+                generateBtn.innerText = '🚀 Initiate Project Lifecycle';
+            }
+        }
+        
+        async function loadReports() { /* ... (no changes) ... */ }
+        document.addEventListener("DOMContentLoaded", loadReports);
+
+        // ---UNCHANGED HELPER FUNCTIONS---
+        function addToStream(msg, type = "info") { const stream = document.getElementById("outputStream"); const timestamp = new Date().toLocaleTimeString('en-GB'); const colors = { system: "#0ea5e9", processing: "#f59e0b", success: "#10b981", error: "#ef4444", info: "#94a3b8" }; const div = document.createElement("div"); div.style.color = colors[type]; div.innerHTML = `<span style="color:#64748b;">[${timestamp}]</span> ${msg}`; stream.appendChild(div); stream.scrollTop = stream.scrollHeight; while (stream.children.length > 50) stream.removeChild(stream.children[1]); }
+        function animateAgent(agentId, state) { const node = document.getElementById(`agent-${agentId}`); if (!node) return; node.classList.remove('active', 'completed'); if (state === 'active') node.classList.add('active'); else if (state === 'completed') node.classList.add('completed'); }
+        async function loadReports() { try { const response = await fetch("http://localhost:5000/list-reports"); const files = await response.json(); const listElement = document.getElementById("reportList"); listElement.innerHTML = ''; if (files.length === 0) { listElement.innerHTML = '<li>No reports found.</li>'; } else { files.forEach(file => { const listItem = document.createElement('li'); listItem.innerHTML = `<a href="http://localhost:5000/reports/${file}" target="_blank" title="${file}">${file}</a>`; listElement.appendChild(listItem); }); } } catch (err) { console.error("Failed to load reports:", err); document.getElementById("reportList").innerHTML = '<li>Error loading reports. Check API server.</li>'; } }
+    </script>
+</body>
+</html>
+```
