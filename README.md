@@ -30,7 +30,7 @@ Follow these steps to get the project running locally.
 ### 1. Clone the Repository
 
 ```bash
-git clone [https://github.com/hxyair/Project-Jigsaw]
+git clone https://github.com/hxyair/Project-Jigsaw
 cd Project-Jigsaw
 ```
 
