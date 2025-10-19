@@ -22,7 +22,7 @@ The system simulates a project lifecycle where different "AI Specialists"—powe
 * **Initial Choice:** The project first used the free `GLM-4.5-Flash` model, aiming for maximum accessibility.
 * **Performance Issue:** Testing revealed `GLM-4.5-Flash` occasionally suffered from unpredictable latency, causing timeouts even with concurrent processing.
 * **Current Default: `GLM-4.5-Air`:** To ensure reliability, the default was changed to `GLM-4.5-Air`. It offers much better speed and consistency at an extremely low cost (approx. $0.07 / 1M tokens), providing a great balance of performance and affordability.
-* **User Flexibility:** You can easily switch back to `glm-4.5-flash` (by changing `MODEL_TO_USE` in `main_agent_poc_local.py`) if you prioritize zero cost over guaranteed completion time, or modify the code to use different models for specific agent roles or even different API providers.
+* **User Flexibility:** You can easily switch to other models (by changing `MODEL_TO_USE` in `main_agent_poc_local.py`), or modify the code to use different models for specific agent roles or even different API providers.
 
     * **Change the Primary Model**: Simply update the `MODEL_TO_USE` variable at the top of `main_agent_poc_local.py` to any other model code supported by the Zhipu AI API (or modify the `call_glm_model` function to use a different provider like OpenAI entirely).
     * **Implement a Hybrid Strategy**: For further cost optimization or task-specific performance, you can adjust the `call_glm_model` function and the individual agent functions (like `technical_agent`, `pi_agent`) to use different models for different roles (e.g., use a faster/cheaper model for simple tasks and a more powerful one for complex synthesis).
@@ -64,7 +64,7 @@ pip install -r requirements.txt
 
 ### 3. Configure Credentials (Zhipu AI)
 
-This project requires API credentials from **Zhipu AI (智谱AI)**.
+This project requires API credentials from **Zhipu AI**.
 
 1.  **Get API Key**: Go to the [Zhipu AI Open Platform](https://open.bigmodel.cn/), register/login, and navigate to the API Keys section to create and copy your key.
 2.  **Environment Variables**: Copy the `.env.example` file to `.env`:
