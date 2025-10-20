@@ -17,15 +17,16 @@ The system simulates a project lifecycle where different "AI Specialists"—powe
 * **API-Driven**: A **FastAPI** backend (`api_server.py`) acts as the bridge between the web UI and the MCP agent server.
 * **Automatic Report Generation**: Generates a structured project proposal in `.docx` format, including placeholders for user customization.
 
+---
+
 ## 💡 Model Selection & Customization
 
 * **Initial Choice:** The project first used the free `GLM-4.5-Flash` model, aiming for maximum accessibility.
 * **Performance Issue:** Testing revealed `GLM-4.5-Flash` occasionally suffered from unpredictable latency, causing timeouts even with concurrent processing.
 * **Current Default: `GLM-4.5-Air`:** To ensure reliability, the default was changed to `GLM-4.5-Air`. It offers much better speed and consistency at an extremely low cost (approx. $0.07 / 1M tokens), providing a great balance of performance and affordability.
-* **User Flexibility:** You can easily switch to other models (by changing `MODEL_TO_USE` in `main_agent_poc_local.py`), or modify the code to use different models for specific agent roles or even different API providers.
+* **User Flexibility:** You can easily switch back to `glm-4.5-flash` (by changing `MODEL_TO_USE` in `main_agent_poc_local.py`) if you prioritize zero cost over guaranteed completion time, or modify the code to use different models for specific agent roles or even different API providers.
 
-    * **Change the Primary Model**: Simply update the `MODEL_TO_USE` variable at the top of `main_agent_poc_local.py` to any other model code supported by the Zhipu AI API (or modify the `call_glm_model` function to use a different provider like OpenAI entirely).
-    * **Implement a Hybrid Strategy**: For further cost optimization or task-specific performance, you can adjust the `call_glm_model` function and the individual agent functions (like `technical_agent`, `pi_agent`) to use different models for different roles (e.g., use a faster/cheaper model for simple tasks and a more powerful one for complex synthesis).
+---
 
 ## 🛠️ System Architecture
 
@@ -35,6 +36,8 @@ The project consists of three main components:
 2.  **`api_server.py` (Backend Bridge)**: A FastAPI server that handles UI requests, lists generated reports, and communicates with the MCP server using default timeouts.
 3.  **`main_agent_poc_local.py` (Agent Server)**: The core MCP server defining each "AI Specialist" as a tool. It uses **Zhipu AI's GLM-4.5-Air** for all LLM calls and executes specialist tasks concurrently via `asyncio`.
 
+---
+
 ## ⚙️ How to Run
 
 Follow these steps to get Project Jigsaw running locally.
@@ -42,7 +45,7 @@ Follow these steps to get Project Jigsaw running locally.
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/hxyair/Project-Jigsaw.git
+git clone [https://github.com/hxyair/Project-Jigsaw.git](https://github.com/hxyair/Project-Jigsaw.git)
 cd Project-Jigsaw
 ```
 
@@ -82,15 +85,19 @@ This project requires API credentials from **Zhipu AI**.
 You need to run **two** servers in **two separate terminals**. Ensure your virtual environment is active in both.
 
 **Terminal 1: Run the MCP Agent Server**
+
 ```bash
 python main_agent_poc_local.py
 ```
+
 *(Wait for it to print "🚀 Starting Collaborative MCP Server..." and show it's running)*
 
 **Terminal 2: Run the FastAPI Server**
+
 ```bash
 uvicorn api_server:app --reload --port 5000
 ```
+
 *(Wait for it to print "🔗 API server running on http://localhost:5000")*
 
 ### 5. Open the Dashboard
@@ -102,8 +109,13 @@ uvicorn api_server:app --reload --port 5000
 
 Generated reports will appear in the `reports/` directory and will be listed in the UI's "Report Library".
 
-## Future Enhancements (Potential)
+---
 
-* Integrate a **Web Search Tool** for agents to fetch and cite live data.
-* Add more sophisticated **Agent Personas** for diverse writing styles.
-* Implement **streaming updates** from the backend to the UI for more accurate real-time status.
+## Future Enhancements & Known Limitations
+
+* **Web Search & Citations**:
+    * **Goal:** Enhance report credibility by enabling agents to fetch live data and cite sources using URLs.
+    * **Status:** Initial tests using the LLM's built-in `web_search` tool showed **inconsistent results in reliably citing sources** within the generated text, even with strong prompting.
+    * **Next Step:** A more robust solution would involve integrating a dedicated **external search API tool** (e.g., Google Search API, Serper API) directly into the agent server (`main_agent_poc_local.py`). This would give more control over fetching, parsing, and citing information but is left as a future enhancement. The current version relies on the LLM's internal knowledge; **users should independently verify critical data points** presented in the generated reports.
+* **Agent Personas**: Add more sophisticated role-playing instructions to prompts to give each AI Specialist a more distinct "voice" and perspective.
+* **Streaming UI Updates**: Implement WebSockets or similar technology for the backend (`api_server.py`) to stream real-time progress updates to the UI (`index.html`) instead of just simulating the phases.

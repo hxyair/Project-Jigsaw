@@ -6,7 +6,6 @@
 # - Includes asyncio.gather for concurrent specialist calls.
 # - Includes generalized prompts and optimized save_to_word.
 # - Includes timing logs.
-# - All comments are in English.
 # ==============================================================================
 import os
 import re
